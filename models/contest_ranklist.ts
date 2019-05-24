@@ -14,7 +14,7 @@ export default class ContestRanklist extends Model {
   @TypeORM.Column({ nullable: true, type: "json" })
   ranking_params: any;
 
-  @TypeORM.Column({ default: JSON.stringify({ player_num: 0 }), type: "json" })
+  @TypeORM.Column({ nullable: false, type: "json" })
   ranklist: any;
 
   async getPlayers() {

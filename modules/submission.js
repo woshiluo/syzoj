@@ -95,8 +95,11 @@ app.get('/submissions', async (req, res) => {
         } else {
           throw new ErrorMessage("您没有权限进行此操作。");
         }
-      } else {
-        query.andWhere('is_public = true');
+      } else if(!curUser){
+        query.andWhere('is_public = 1');
+      }
+      else {
+        query.andWhere('(is_public = 1 OR (is_public =  2 AND from_group = :user_group) )', {user_group: curUser.from_group})
       }
     } else if (req.query.problem_id) {
       query.andWhere('problem_id = :problem_id', { problem_id: parseInt(req.query.problem_id) || 0 });

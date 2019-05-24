@@ -2,6 +2,7 @@ let Contest = syzoj.model('contest');
 let ContestRanklist = syzoj.model('contest_ranklist');
 let ContestPlayer = syzoj.model('contest_player');
 let Problem = syzoj.model('problem');
+let Group = syzoj.model('group');
 let JudgeState = syzoj.model('judge_state');
 let User = syzoj.model('user');
 
@@ -12,7 +13,7 @@ app.get('/contests', async (req, res) => {
   try {
     let where;
     if (res.locals.user && res.locals.user.is_admin) where = {}
-    else where = { is_public: true };
+    else where = { is_public: 1 , and: [ {is_public: 2, from_group: (res.locals.user? res.locals.user.from_group: 0)} ]};
 
     let paginate = syzoj.utils.paginate(await Contest.countForPagination(where), req.query.page, syzoj.config.page.contest);
     let contests = await Contest.queryPage(paginate, where, {
@@ -47,13 +48,15 @@ app.get('/contest/:id/edit', async (req, res) => {
     }
 
     let problems = [], admins = [];
+    let Groups = await Group.find();
     if (contest.problems) problems = await contest.problems.split('|').mapAsync(async id => await Problem.findById(id));
     if (contest.admins) admins = await contest.admins.split('|').mapAsync(async id => await User.findById(id));
 
     res.render('contest_edit', {
       contest: contest,
       problems: problems,
-      admins: admins
+      admins: admins,
+      Groups: Groups
     });
   } catch (e) {
     syzoj.log(e);
@@ -71,11 +74,13 @@ app.post('/contest/:id/edit', async (req, res) => {
     let contest = await Contest.findById(contest_id);
     let ranklist = null;
     if (!contest) {
-      contest = await Contest.create();
+      contest = await Contest.create({from_group: res.locals.user.from_group});
 
       contest.holder_id = res.locals.user.id;
 
-      ranklist = await ContestRanklist.create();
+      ranklist = await ContestRanklist.create({
+        ranklist: JSON.stringify({ player_num: 0 })
+      });
 
       // Only new contest can be set type
       if (!['noi', 'ioi', 'acm'].includes(req.body.type)) throw new ErrorMessage('无效的赛制。');
@@ -103,8 +108,9 @@ app.post('/contest/:id/edit', async (req, res) => {
     contest.information = req.body.information;
     contest.start_time = syzoj.utils.parseDate(req.body.start_time);
     contest.end_time = syzoj.utils.parseDate(req.body.end_time);
-    contest.is_public = req.body.is_public === 'on';
+		contest.is_public = (req.body.is_public === 'on' ? (req.body.from_group == 0? 1 : 2) : 0);
     contest.hide_statistics = req.body.hide_statistics === 'on';
+    contest.from_group = req.body.from_group;
 
     await contest.save();
 

@@ -3,11 +3,14 @@ let JudgeState = syzoj.model('judge_state');
 let Article = syzoj.model('article');
 let Contest = syzoj.model('contest');
 let User = syzoj.model('user');
+let Group = syzoj.model('group');
 let UserPrivilege = syzoj.model('user_privilege');
 const RatingCalculation = syzoj.model('rating_calculation');
 const RatingHistory = syzoj.model('rating_history');
 let ContestPlayer = syzoj.model('contest_player');
 const calcRating = require('../libs/rating');
+
+const entityManager = TypeORM.getManager();
 
 app.get('/admin/info', async (req, res) => {
   try {
@@ -197,7 +200,7 @@ app.post('/admin/rating/add', async (req, res) => {
     if (!contest) throw new ErrorMessage('无此比赛');
 
     await contest.loadRelationships();
-    const newcalc = await RatingCalculation.create(contest.id);
+    const newcalc = await RatingCalculation.create({ contest: contest.id });
     await newcalc.save();
 
     if (!contest.ranklist || contest.ranklist.ranklist.player_num <= 1) {
@@ -218,7 +221,12 @@ app.post('/admin/rating/add', async (req, res) => {
       const user = newRating[i].user;
       user.rating = newRating[i].currentRating;
       await user.save();
-      const newHistory = await RatingHistory.create(newcalc.id, user.id, newRating[i].currentRating, newRating[i].rank);
+	  const newHistory = await RatingHistory.create({
+		rating_calculation_id: newcalc.id,
+		user_id: user.id,
+		rating_after: newRating[i].currentRating,
+		rank: newRating[i].rank
+	  }); 
       await newHistory.save();
     }
 
@@ -482,4 +490,60 @@ app.get('/admin/serviceID', async (req, res) => {
       err: e
     })
   }
+});
+
+
+app.get('/admin/group', async (req, res) => {
+	try {
+		if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
+
+		let Groups = await Group.find();
+
+		res.render('admin_group', {
+			Groups: Groups
+		});
+	} catch (e) {
+		syzoj.log(e);
+		res.render('error', {
+			err: e
+		})
+	}
+});
+
+app.post('/admin/group', async (req, res) => {
+	try {
+		if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
+
+		let data = JSON.parse(req.body.data);
+		group = await Group.create({
+			group_name: data.name
+		});
+		await group.save();
+		res.redirect(syzoj.utils.makeUrl(['admin', 'group']));
+	} catch (e) {
+		syzoj.log(e);
+		res.render('error', {
+			err: e
+		})
+	}
+});
+
+app.post('/admin/group/del/:id', async (req, res) => {
+	let id = parseInt(req.params.id) || 0;
+	try {
+		if (!res.locals.user || !res.locals.user.is_admin) throw new ErrorMessage('您没有权限进行此操作。');
+		if (id === 1) throw new ErrorMessage('您无法删除 1 用户组（普通用户组）');
+
+		await entityManager.query('UPDATE `judge_state` SET `from_group` = 1 WHERE `from_group` = ' + id);
+		await entityManager.query('UPDATE `user` SET `from_group` = 1 	WHERE `from_group` = ' + id);
+		await entityManager.query('UPDATE `problem` SET `from_group` = 1 WHERE `from_group` = ' + id);
+		await entityManager.query('DELETE FROM `group` WHERE `id` = ' + id);
+
+		res.redirect(syzoj.utils.makeUrl(['admin', 'group']));
+	} catch (e) {
+		syzoj.log(e);
+		res.render('error', {
+			err: e
+		})
+	}
 });

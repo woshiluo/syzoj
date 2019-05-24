@@ -22,7 +22,22 @@
           <option value="1" <%= edited_user.sex == 1 ? 'selected': '' %>>男</option>
           <option value="-1" <%= edited_user.sex == -1 ? 'selected': '' %>>女</option>
         </select>
-	    </div>
+      </div>
+      <% if(user.is_admin) { %>
+        <div class="field">
+            <label for="sex">用户组</label>
+            <div class="ui fluid selection dropdown" id="select_group">
+              <input type="hidden" name="from_group" value="<%= edited_user.from_group %>">
+              <i class="dropdown icon"></i>
+              <div class="default text"></div>
+              <div class="menu">
+                <% for ( group of Groups ) { %>
+                  <div class="item" data-value="<%= group.id %>"><b><%= group.group_name %></b></div>
+                <%}%>
+              </div>
+            </div>
+        </div>
+        <%}%>
 	    <div class="field">
 	    	<label for="email">Email</label>
 	    	<input class="font-content" type="email" id="email" name="email" value="<%= edited_user.email %>"<% if (!user.allowedManage) { %> readonly<% } %>>

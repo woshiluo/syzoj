@@ -1,4 +1,5 @@
 let User = syzoj.model('user');
+let Group = syzoj.model('group');
 const RatingCalculation = syzoj.model('rating_calculation');
 const RatingHistory = syzoj.model('rating_history');
 const Contest = syzoj.model('contest');
@@ -137,9 +138,12 @@ app.get('/user/:id/edit', async (req, res) => {
 
     res.locals.user.allowedManage = await res.locals.user.hasPrivilege('manage_user');
 
+    let Groups = await Group.find();
+
     res.render('user_edit', {
       edited_user: user,
-      error_info: null
+      error_info: null,
+      Groups: Groups
     });
   } catch (e) {
     syzoj.log(e);
@@ -161,9 +165,12 @@ app.post('/user/:id/edit', async (req, res) => {
     let id = parseInt(req.params.id);
     user = await User.findById(id);
     if (!user) throw new ErrorMessage('无此用户。');
+    if(!req.body.from_group)
+      req.body.from_group = user.from_group;
 
     let allowedEdit = await user.isAllowedEditBy(res.locals.user);
     if (!allowedEdit) throw new ErrorMessage('您没有权限进行此操作。');
+    if ( (!res.locals.user.is_admin) && user.from_group != req.body.from_group) throw new ErrorMessage('您没有权限进行此操作。');
 
     if (req.body.old_password && req.body.new_password) {
       if (user.password !== req.body.old_password && !await res.locals.user.hasPrivilege('manage_user')) throw new ErrorMessage('旧密码错误。');
@@ -189,6 +196,7 @@ app.post('/user/:id/edit', async (req, res) => {
 
     user.information = req.body.information;
     user.sex = req.body.sex;
+    user.from_group = req.body.from_group;
     user.public_email = (req.body.public_email === 'on');
     user.prefer_formatted_code = (req.body.prefer_formatted_code === 'on');
 
@@ -198,10 +206,13 @@ app.post('/user/:id/edit', async (req, res) => {
 
     user.privileges = await user.getPrivileges();
     res.locals.user.allowedManage = await res.locals.user.hasPrivilege('manage_user');
+    let Groups = await Group.find();
 
     res.render('user_edit', {
       edited_user: user,
-      error_info: ''
+      error_info: '',
+      Groups: Groups
+
     });
   } catch (e) {
     user.privileges = await user.getPrivileges();

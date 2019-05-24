@@ -2,6 +2,7 @@ let Problem = syzoj.model('problem');
 let JudgeState = syzoj.model('judge_state');
 let FormattedCode = syzoj.model('formatted_code');
 let Contest = syzoj.model('contest');
+let Group = syzoj.model('group');
 let ProblemTag = syzoj.model('problem_tag');
 let Article = syzoj.model('article');
 
@@ -23,7 +24,8 @@ app.get('/problems', async (req, res) => {
     if (!res.locals.user || !await res.locals.user.hasPrivilege('manage_problem')) {
       if (res.locals.user) {
         query.where('is_public = 1')
-             .orWhere('user_id = :user_id', { user_id: res.locals.user.id });
+             .orWhere('user_id = :user_id', { user_id: res.locals.user.id })
+             .orWhere('(is_public = 2 AND from_group =  :from_group)', {from_group: res.locals.user.from_group});
       } else {
         query.where('is_public = 1');
       }
@@ -277,6 +279,7 @@ app.get('/problem/:id/edit', async (req, res) => {
     if (!problem) {
       if (!res.locals.user) throw new ErrorMessage('请登录后继续。', { '登录': syzoj.utils.makeUrl(['login'], { 'url': req.originalUrl }) });
       problem = await Problem.create({
+        from_group: res.locals.user.from_group,
         time_limit: syzoj.config.default.problem.time_limit,
         memory_limit: syzoj.config.default.problem.memory_limit,
         type: 'traditional'
@@ -312,6 +315,7 @@ app.post('/problem/:id/edit', async (req, res) => {
       if (!res.locals.user) throw new ErrorMessage('请登录后继续。', { '登录': syzoj.utils.makeUrl(['login'], { 'url': req.originalUrl }) });
 
       problem = await Problem.create({
+        from_group: res.locals.user.from_group,
         time_limit: syzoj.config.default.problem.time_limit,
         memory_limit: syzoj.config.default.problem.memory_limit,
         type: 'traditional'
@@ -379,6 +383,7 @@ app.get('/problem/:id/import', async (req, res) => {
       if (!res.locals.user) throw new ErrorMessage('请登录后继续。', { '登录': syzoj.utils.makeUrl(['login'], { 'url': req.originalUrl }) });
 
       problem = await Problem.create({
+        from_group: res.locals.user.from_group,
         time_limit: syzoj.config.default.problem.time_limit,
         memory_limit: syzoj.config.default.problem.memory_limit,
         type: 'traditional'
@@ -413,6 +418,7 @@ app.post('/problem/:id/import', async (req, res) => {
       if (!res.locals.user) throw new ErrorMessage('请登录后继续。', { '登录': syzoj.utils.makeUrl(['login'], { 'url': req.originalUrl }) });
 
       problem = await Problem.create({
+        from_group: res.locals.user.from_group,
         time_limit: syzoj.config.default.problem.time_limit,
         memory_limit: syzoj.config.default.problem.memory_limit,
         type: 'traditional'
@@ -504,10 +510,12 @@ app.get('/problem/:id/manage', async (req, res) => {
     await problem.loadRelationships();
 
     let testcases = await syzoj.utils.parseTestdata(problem.getTestdataPath(), problem.type === 'submit-answer');
+		let Groups = await Group.find();
 
     res.render('problem_manage', {
       problem: problem,
-      testcases: testcases
+      testcases: testcases,
+      Groups: Groups
     });
   } catch (e) {
     syzoj.log(e);
@@ -541,6 +549,7 @@ app.post('/problem/:id/manage', app.multer.fields([{ name: 'testdata', maxCount:
       }
     }
     problem.type = req.body.type;
+    problem.from_group = req.body.from_group;
 
     let validateMsg = await problem.validate();
     if (validateMsg) throw new ErrorMessage('无效的题目数据配置。', null, validateMsg);
@@ -591,11 +600,15 @@ async function setPublic(req, res, is_public) {
 }
 
 app.post('/problem/:id/public', async (req, res) => {
-  await setPublic(req, res, true);
+  await setPublic(req, res, 1);
 });
 
 app.post('/problem/:id/dis_public', async (req, res) => {
-  await setPublic(req, res, false);
+  await setPublic(req, res, 0);
+});
+
+app.post('/problem/:id/group_public', async (req, res) => {
+  await setPublic(req, res, 2);
 });
 
 app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1 }]), async (req, res) => {
@@ -633,11 +646,12 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
         submit_time: parseInt((new Date()).getTime() / 1000),
         status: 'Unknown',
         task_id: randomstring.generate(10),
+        from_group: problem.from_group,
         code: file.md5,
         code_length: size,
         language: null,
         user_id: curUser.id,
-        problem_id: req.params.id,
+        problem_id: id,
         is_public: problem.is_public
       });
     } else {
@@ -656,9 +670,10 @@ app.post('/problem/:id/submit', app.multer.fields([{ name: 'answer', maxCount: 1
         task_id: randomstring.generate(10),
         code: code,
         code_length: Buffer.from(code).length,
+        from_group: problem.from_group,
         language: req.body.language,
         user_id: curUser.id,
-        problem_id: req.params.id,
+        problem_id: id,
         is_public: problem.is_public
       });
     }

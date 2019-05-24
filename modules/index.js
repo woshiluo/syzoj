@@ -29,11 +29,11 @@ app.get('/', async (req, res) => {
       fortune = Divine(res.locals.user.username, res.locals.user.sex);
     }
 
-    let contests = await Contest.queryRange([1, 5], { is_public: true }, {
+    let contests = await Contest.queryRange([1, 5], { is_public: 1 }, {
       start_time: 'DESC'
     });
 
-    let problems = (await Problem.queryRange([1, 5], { is_public: true }, {
+    let problems = (await Problem.queryRange([1, 5], { is_public: 1 }, {
       publicize_time: 'DESC'
     })).map(problem => ({
       id: problem.id,

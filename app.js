@@ -166,7 +166,7 @@ global.syzoj = {
                      .map(filename => require(modelsBuiltPath + filename.replace('.ts', '.js')).default);
 
     await TypeORM.createConnection({
-      type: 'mariadb',
+      type: 'mysql',
       host: this.config.db.host.split(':')[0],
       port: this.config.db.host.split(':')[1] || 3306,
       username: this.config.db.username,

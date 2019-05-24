@@ -28,6 +28,7 @@ if (contest) {
           <%= this.alpha(pid) %>. <%= syzoj.utils.removeTitleTag(problem.title) %>
         <% } else { %>
           #<%= problem.id %>. <%= problem.title %><% if (problem.allowedEdit && !problem.is_public) { %><span class="ui tiny red label">未公开</span><% } %>
+          <% if (problem.is_public == 2 || (problem.from_group != 1 && problem.is_public == 0) ){ %><span class="ui tiny blue label">团队题目</span><% } %>
         <% } %>
       </h1>
     </div>
@@ -116,6 +117,7 @@ if (contest) {
               <a class="small ui button" id="dis_public" href-post="<%= syzoj.utils.makeUrl(['problem', problem.id, 'dis_public']) %>">取消公开</a>
             <% } else { %>
               <a class="small ui button" id="public" href-post="<%= syzoj.utils.makeUrl(['problem', problem.id, 'public']) %>">公开</a>
+              <a class="small ui button" id="group_public" href-post="<%= syzoj.utils.makeUrl(['problem', problem.id, 'group_public']) %>">组内公开</a>
             <% } %>
             <div class="ui basic modal" id="modal-delete">
               <div class="ui icon header">
@@ -389,4 +391,25 @@ if (contest) {
   }
   </script>
 <% } %>
+<script>
+
+$(document).ready(function (){
+	$("pre").prepend("<a class=\"copy-button ui button\">复制</a>");
+	$(".copy-button").click(function() {
+		var element = $(this).siblings("code");
+		var text = $(element).text();
+		var $temp = $("<textarea>");
+		$("body").append($temp);
+		$temp.val(text).select();
+		document.execCommand("copy");
+		$temp.remove();
+		$(this).text("复制成功");
+
+		var e = this;
+		setTimeout(function() {
+			$(e).text("复制");
+		}, 500);
+	});
+});
+</script>
 <% include footer %>

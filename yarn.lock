@@ -2176,15 +2176,6 @@ map-age-cleaner@^0.1.1:
   dependencies:
     p-defer "^1.0.0"
 
-mariadb@^2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/mariadb/-/mariadb-2.0.3.tgz#d265813e95579795d6c1e5dcfd034fef873d6740"
-  integrity sha512-/0poOq++rcAWrSHdS+ozLDbK+/ZOpQ2XHYoVHXeZtMuhxEH/w7g/KfwryCqr3BCIC0JC/9UeJJG3v7vNNlshag==
-  dependencies:
-    denque "^1.4.0"
-    iconv-lite "^0.4.24"
-    long "^4.0.0"
-
 markdown-it-math-loose@^4.1.1:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/markdown-it-math-loose/-/markdown-it-math-loose-4.1.1.tgz#b5886e22fa50ad2a6a7cd6ee812f579263c74100"

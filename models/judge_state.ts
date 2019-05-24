@@ -99,8 +99,11 @@ export default class JudgeState extends Model {
   type_info: number;
   
   @TypeORM.Index()
-  @TypeORM.Column({ nullable: true, type: "boolean" })
-  is_public: boolean;
+  @TypeORM.Column({ nullable: true, type: "integer" })
+  is_public: number;
+
+  @TypeORM.Column({ nullable: false, type: "integer" })
+  from_group: number;
 
   user?: User;
   problem?: Problem;

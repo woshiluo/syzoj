@@ -54,9 +54,12 @@ export default class Contest extends Model {
   @TypeORM.Column({ nullable: true, type: "integer" })
   ranklist_id: number;
 
-  @TypeORM.Column({ nullable: true, type: "boolean" })
-  is_public: boolean;
+  @TypeORM.Column({ nullable: true, type: "integer" })
+  is_public: number;
 
+  @TypeORM.Column({ nullable: false, type: "integer" })
+  from_group: number;
+  
   @TypeORM.Column({ nullable: true, type: "boolean" })
   hide_statistics: boolean;
 
@@ -127,8 +130,10 @@ export default class Contest extends Model {
       if (!player) {
         player = await ContestPlayer.create({
           contest_id: this.id,
-          user_id: judge_state.user_id
+          user_id: judge_state.user_id,
+		  score_details: {} 
         });
+		await player.save();
       }
 
       await player.updateScore(judge_state);

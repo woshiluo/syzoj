@@ -142,7 +142,7 @@ module.exports = {
     return gravatar.url(email, { s: size, d: 'mm' }).replace('//www.gravatar.com/avatar', syzoj.config.gravatar_url);
   },
   async parseTestdata(dir, submitAnswer) {
-    if (!await syzoj.utils.isDir(dir)) return null;
+    // if (!await syzoj.utils.isDir(dir)) return null;
 
     try {
       // Get list of *files*

@@ -113,6 +113,7 @@ app.post('/api/sign_up', async (req, res) => {
         username: req.body.username,
         password: req.body.password,
         email: req.body.email,
+        from_group: 1,
         is_show: syzoj.config.default.user.show,
         rating: syzoj.config.default.user.rating,
         register_time: parseInt((new Date()).getTime() / 1000)

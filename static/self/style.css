@@ -312,3 +312,11 @@ code {
   padding-left: 0.8rem !important;
   padding-right: 0 !important;
 }
+
+.copy-button{
+	position: absolute;
+	top: -1px;
+	right: -7px;
+	border-top-left-radius: 0px;
+	border-bottom-right-radius: 0px
+}

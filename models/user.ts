@@ -41,6 +41,9 @@ export default class User extends Model {
   @TypeORM.Column({ nullable: true, type: "integer" })
   submit_num: number;
 
+  @TypeORM.Column({nullable: false, type:"integer"})
+  from_group: number;
+
   @TypeORM.Column({ nullable: true, type: "boolean" })
   is_admin: boolean;
 

@@ -90,8 +90,11 @@ export default class Problem extends Model {
   submit_num: number;
 
   @TypeORM.Index()
-  @TypeORM.Column({ nullable: true, type: "boolean" })
-  is_public: boolean;
+  @TypeORM.Column({ nullable: true, type: "integer" })
+  is_public: number;
+
+  @TypeORM.Column({ nullable: false, type: "integer" })
+  from_group: number;
 
   @TypeORM.Column({ nullable: true, type: "boolean" })
   file_io: boolean;
@@ -130,7 +133,7 @@ export default class Problem extends Model {
   }
 
   async isAllowedUseBy(user) {
-    if (this.is_public) return true;
+    if (this.is_public == 1 || (this.is_public == 2 && user.from_group == this.from_group)) return true;
     if (!user) return false;
     if (await user.hasPrivilege('manage_problem')) return true;
     return this.user_id === user.id;
